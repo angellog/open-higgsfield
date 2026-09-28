@@ -1,0 +1,8 @@
+Your AI character just built 1.2M TikTok followers.
+
+We built a Creator Marketplace on top of Open Higgsfield — rent, collaborate with, or transfer AI creator digital assets. Each creator is a wallet-owned IP with real follower numbers across Instagram, TikTok, and Snapchat.
+
+The stack: Next.js 16 · 38 video models · GSAP-animated composition rendered with Hyperframes.
+
+Open source. Build on it.
+→ github.com/angellog/Open-Higgsfield

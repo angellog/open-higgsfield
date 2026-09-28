@@ -307,3 +307,16 @@ export function WaveBadgeIcon({ size = 12 }: IconProps) {
     </svg>
   );
 }
+
+/* Two overlapping person silhouettes — the front one slightly smaller so the
+   back one is visible. Reads as "group" or "creators" at 15–16px. */
+export function CreatorsIcon({ size = 16 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <circle cx="5.6" cy="5.4" r="2.4" />
+      <path d="M1.8 13.2a3.8 3.8 0 0 1 7.6 0" />
+      <circle cx="11.4" cy="5.1" r="1.9" />
+      <path d="M9.8 13.2a2.9 2.9 0 0 1 5.6-1" />
+    </svg>
+  );
+}

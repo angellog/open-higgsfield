@@ -8,18 +8,20 @@ export const SURFACE_LABELS: Record<Surface, string> = {
 };
 
 /** What the gallery is scoped to. "assets" is every run, both surfaces;
-    "favorites" is every run the visitor kept, both surfaces. */
-export type GalleryView = Surface | "assets" | "favorites";
+    "favorites" is every run the visitor kept, both surfaces;
+    "creators" is the AI UGC creator marketplace. */
+export type GalleryView = Surface | "assets" | "favorites" | "creators";
 
 /** Scopes that span both surfaces, so switching to them leaves the model alone. */
-export const CROSS_VIEWS = new Set<GalleryView>(["assets", "favorites"]);
+export const CROSS_VIEWS = new Set<GalleryView>(["assets", "favorites", "creators"]);
 
-export const VIEWS: readonly GalleryView[] = ["image", "video", "assets", "favorites"];
+export const VIEWS: readonly GalleryView[] = ["image", "video", "assets", "favorites", "creators"];
 
 export const VIEW_LABELS: Record<GalleryView, string> = {
   ...SURFACE_LABELS,
   assets: "Assets",
   favorites: "Favorites",
+  creators: "Creators",
 };
 
 export const PROMPT_PLACEHOLDERS: Record<Surface, string> = {

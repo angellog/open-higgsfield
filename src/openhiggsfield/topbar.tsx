@@ -3,13 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { VIEWS, VIEW_LABELS, type GalleryView } from "./data";
-import { AssetsIcon, HeartIcon, ImageIcon, KeyIcon, VideoIcon } from "./icons";
+import { AssetsIcon, CreatorsIcon, HeartIcon, ImageIcon, KeyIcon, VideoIcon } from "./icons";
 
 const VIEW_ICONS: Record<GalleryView, () => React.ReactNode> = {
   image: () => <ImageIcon />,
   video: () => <VideoIcon />,
   assets: () => <AssetsIcon />,
   favorites: () => <HeartIcon size={15} />,
+  creators: () => <CreatorsIcon size={15} />,
 };
 
 export function Topbar({
