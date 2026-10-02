@@ -38,6 +38,10 @@ const EMPTY: Record<GalleryView, { title: string; hint: string }> = {
     title: "Nothing kept yet",
     hint: "Hover a run and press its heart to keep it here. Kept runs stay put when older ones age out of the history.",
   },
+  creators: {
+    title: "AI Creator Marketplace",
+    hint: "Rent, collaborate with, and transfer AI creator digital assets.",
+  },
 };
 
 /* Action labels name the run they act on — tabbing a long grid otherwise

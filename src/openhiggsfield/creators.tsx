@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
+import { fetchCreators, rentCreator } from "../lib/creators-db";
 import {
-  CREATORS,
   STATUS_LABELS,
   formatFollowers,
   type Creator,
@@ -86,6 +86,22 @@ const SOCIAL_NAMES = {
   tiktok: "TT",
   snapchat: "SC",
 };
+
+/* ---------- skeleton ---------- */
+
+function CreatorCardSkeleton() {
+  return (
+    <article className="ohf-creator-card ohf-creator-card--skeleton" aria-hidden>
+      <div className="ohf-creator-avatar" style={{ background: "var(--s3)" }} />
+      <div className="ohf-creator-body" style={{ gap: 10 }}>
+        <div style={{ height: 16, width: "55%", background: "var(--s3)", borderRadius: 6 }} />
+        <div style={{ height: 12, width: "80%", background: "var(--s3)", borderRadius: 6 }} />
+        <div style={{ height: 28, width: "100%", background: "var(--s3)", borderRadius: 8 }} />
+        <div style={{ height: 36, width: "100%", background: "var(--s3)", borderRadius: 8 }} />
+      </div>
+    </article>
+  );
+}
 
 /* ---------- creator card ---------- */
 
@@ -180,23 +196,33 @@ function CreatorCard({
 function CreatorModal({
   creator,
   onClose,
+  onAction,
 }: {
   creator: Creator;
   onClose: () => void;
+  onAction: (c: Creator, action: "rent" | "collaborate" | "transfer") => Promise<void>;
 }) {
+  const [pending, setPending] = useState<"rent" | "collaborate" | "transfer" | null>(null);
   const isAvailable = creator.status === "available";
   const gradient = `linear-gradient(160deg, hsl(${creator.hue}, 60%, 30%), hsl(${creator.hue2}, 50%, 18%))`;
 
+  async function handleAction(action: "rent" | "collaborate" | "transfer") {
+    setPending(action);
+    try {
+      await onAction(creator, action);
+      onClose();
+    } finally {
+      setPending(null);
+    }
+  }
+
   return (
-    /* eslint-disable-next-line jsx-a11y/click-events-have-key-events */
     <div
       className="ohf-creator-modal-backdrop"
       role="dialog"
       aria-modal
       aria-label={`${creator.name} profile`}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="ohf-creator-modal">
         {/* hero */}
@@ -249,9 +275,7 @@ function CreatorModal({
                   rel="noopener noreferrer"
                   className="ohf-social-card"
                 >
-                  <span className="ohf-social-card-icon">
-                    <SIcon />
-                  </span>
+                  <span className="ohf-social-card-icon"><SIcon /></span>
                   <div className="ohf-social-card-info">
                     <span className="ohf-social-card-count">{formatFollowers(profile.followers)}</span>
                     <span className="ohf-social-card-platform">{platform}</span>
@@ -287,16 +311,29 @@ function CreatorModal({
             <button
               type="button"
               className="ohf-creator-btn ohf-creator-btn--rent"
-              disabled={!isAvailable}
+              disabled={!isAvailable || pending !== null}
               style={{ flex: 1 }}
+              onClick={() => handleAction("rent")}
             >
-              {isAvailable ? `Rent · $${creator.pricePerDay}/day` : STATUS_LABELS[creator.status]}
+              {pending === "rent" ? "Renting…" : isAvailable ? `Rent · $${creator.pricePerDay}/day` : STATUS_LABELS[creator.status]}
             </button>
-            <button type="button" className="ohf-creator-btn ohf-creator-btn--collab" style={{ flex: 1 }}>
-              Collaborate
+            <button
+              type="button"
+              className="ohf-creator-btn ohf-creator-btn--collab"
+              disabled={pending !== null}
+              style={{ flex: 1 }}
+              onClick={() => handleAction("collaborate")}
+            >
+              {pending === "collaborate" ? "…" : "Collaborate"}
             </button>
-            <button type="button" className="ohf-creator-btn ohf-creator-btn--transfer" style={{ flex: 1 }}>
-              Transfer
+            <button
+              type="button"
+              className="ohf-creator-btn ohf-creator-btn--transfer"
+              disabled={pending !== null}
+              style={{ flex: 1 }}
+              onClick={() => handleAction("transfer")}
+            >
+              {pending === "transfer" ? "…" : "Transfer"}
             </button>
           </div>
         </div>
@@ -317,13 +354,33 @@ const FILTERS: Array<{ key: CreatorStatus | "all"; label: string }> = [
 /* ---------- main marketplace ---------- */
 
 export function CreatorMarketplace() {
+  const [creators, setCreators] = useState<Creator[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<CreatorStatus | "all">("all");
   const [selected, setSelected] = useState<Creator | null>(null);
 
-  const visible = filter === "all" ? CREATORS : CREATORS.filter((c) => c.status === filter);
+  useEffect(() => {
+    fetchCreators()
+      .then(setCreators)
+      .catch((e) => setError(String(e?.message ?? e)))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const visible = filter === "all" ? creators : creators.filter((c) => c.status === filter);
 
   const openModal = useCallback((c: Creator) => setSelected(c), []);
   const closeModal = useCallback(() => setSelected(null), []);
+
+  async function handleAction(creator: Creator, action: "rent" | "collaborate" | "transfer") {
+    await rentCreator(creator.id, action);
+    // optimistic update
+    const newStatus: CreatorStatus =
+      action === "rent" ? "rented" : action === "collaborate" ? "collaborating" : "rented";
+    setCreators((prev) =>
+      prev.map((c) => (c.id === creator.id ? { ...c, status: newStatus } : c)),
+    );
+  }
 
   return (
     <div className="ohf-creators">
@@ -351,13 +408,23 @@ export function CreatorMarketplace() {
         ))}
       </div>
 
+      {error && (
+        <p style={{ padding: "16px 32px", color: "var(--tx-2)", fontSize: 13 }}>
+          Could not load creators: {error}
+        </p>
+      )}
+
       <div className="ohf-creator-grid">
-        {visible.map((creator) => (
-          <CreatorCard key={creator.id} creator={creator} onSelect={openModal} />
-        ))}
+        {loading
+          ? Array.from({ length: 6 }, (_, i) => <CreatorCardSkeleton key={i} />)
+          : visible.map((creator) => (
+              <CreatorCard key={creator.id} creator={creator} onSelect={openModal} />
+            ))}
       </div>
 
-      {selected && <CreatorModal creator={selected} onClose={closeModal} />}
+      {selected && (
+        <CreatorModal creator={selected} onClose={closeModal} onAction={handleAction} />
+      )}
     </div>
   );
 }
